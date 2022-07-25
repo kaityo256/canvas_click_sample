@@ -1,0 +1,92 @@
+<html>
+
+<body>
+    <canvas id='canvas' width=360 height=360 style="background-color:black;"></canvas>
+    <div>
+        左クリックで赤く、右クリックで黒くなります。最初にランダムに10個赤いセルが用意されます。リロードするたびに場所が変わります。
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/underscore@1.13.4/underscore-umd-min.js"></script>
+<script>
+
+    // エレメントIDからオブジェクトを取得する関数
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+    const L = 9; // グリッド数
+    const grid_size = 40; // グリッドサイズ
+
+    // 描画で参照するデータ。これを見て描画する(最初は全て0で初期化)
+    var data = new Array(L).fill(0).map(() => new Array(L).fill(0));
+
+    // ウィンドウが開かれた時に実行される関数。イベントの登録や初期化等に使う
+    window.onload = async function () {
+        // ドキュメント全体で右クリックを禁止しておく (コンテキストメニューが開かれるのを防ぐため)
+        document.oncontextmenu = function () { return false; }
+        canvas = $('canvas')
+
+        // 左クリックイベントの登録
+        canvas.onclick = function (e) {
+            // クリックした座標の取得
+            var r = canvas.getBoundingClientRect();
+            x = e.clientX - r.left;
+            y = e.clientY - r.top;
+            // クリックした座標から配列の座標に変換 (割り算して小数点以下切り捨て)
+            const ix = Math.floor(x / grid_size);
+            const iy = Math.floor(y / grid_size);
+            data[ix][iy] = 1;
+            draw(canvas);
+        }
+        // 右クリックイベントの登録
+        canvas.oncontextmenu = function (e) {
+            // クリックした座標の取得
+            var r = canvas.getBoundingClientRect();
+            x = e.clientX - r.left;
+            y = e.clientY - r.top;
+            // クリックした座標から配列の座標に変換 (割り算して小数点以下切り捨て)
+            const ix = Math.floor(x / grid_size);
+            const iy = Math.floor(y / grid_size);
+            data[ix][iy] = 0;
+            draw(canvas);
+        }
+        initArray();
+        draw(canvas);
+    }
+
+    // 配列の初期化
+    function initArray() {
+        // 0から80までの連番の配列を作る
+        const a = [...Array(L * L).keys()];
+        // その配列からランダムに10個選び、データ配列に入力する
+        _.sample(a, 10).forEach(i => {
+            const ix = i % L;
+            const iy = Math.floor(i / L);
+            data[ix][iy] = 1;
+        });
+    }
+
+    function draw(canvas) {
+        var context = canvas.getContext('2d');
+        // 背景を白で塗りつぶす
+        context.fillStyle = "white";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.fillStyle = "black";
+        for (let i = 0; i < L; i++) {
+            for (let j = 0; j < L; j++) {
+                // データ配列の中身により描画色を変更する
+                var color = "black";
+                if (data[i][j] == 1) {
+                    color = "red";
+                }
+                context.fillStyle = color;
+                const x = i * grid_size;
+                const y = j * grid_size;
+                context.fillRect(x + 1, y + 1, grid_size - 2, grid_size - 2);
+            }
+        }
+    }
+</script>
+
+</html>
